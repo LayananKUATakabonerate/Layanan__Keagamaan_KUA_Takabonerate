@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KUA TAKABONERATE - Layanan Keagamaan Digital</title>
+    
+    <!-- Tailwind CSS (via CDN for lightweight styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: 80px; /* Space for bottom nav */
+        }
+        
+        /* Custom Colors based on request */
+        .bg-kua-primary { background-color: #0d9488; } /* Teal-600 */
+        .text-kua-primary { color: #0d9488; }
+        .bg-kua-light { background-color: #ccfbf1; } /* Teal-100 */
+
+        /* Hide scrollbar for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* View Management */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #0d9488;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- HEADER -->
+    <header class="bg-kua-primary text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-2" onclick="navigateTo('home')">
+                <i class="fa-solid fa-mosque text-2xl"></i>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">KUA TAKABONERATE</h1>
+                    <p class="text-xs text-teal-100">Layanan Cepat & Mudah</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <!-- Audio Guide Toggle -->
+                <button onclick="playCurrentPageAudio()" class="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <!-- Language Toggle -->
+                <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-white text-teal-800 text-xs font-bold py-1 px-2 rounded border-none focus:ring-0">
+                    <option value="id">ID</option>
+                    <option value="lkl">SILAJARA</option> <!-- Silajara/Local mock -->
+                </select>
+            </div>
+        </div>
+        <!-- Offline Indicator -->
+        <div id="offline-banner" class="hidden bg-orange-500 text-white text-xs text-center py-1 mt-2 rounded">
+            <i class="fa-solid fa-wifi-slash"></i> Mode Offline - Data akan disinkronkan nanti
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main id="app" class="p-4 max-w-md mx-auto">
+        
+        <!-- HOME VIEW -->
+        <div id="view-home" class="view-section active">
+            <!-- Welcome Card -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm mb-6 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold" data-i18n="welcome">Selamat Datang</h2>
+                    <p class="text-sm text-gray-500" data-i18n="subtitle">Urusan agama jadi lebih mudah.</p>
+                </div>
+                <img src="Gambar/Logo_Kemenag_2.jpeg" alt="Logo kemenag" width="80px">
+            </div>
+
+            <!-- Main Menu Grid -->
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Card 1: Pengaduan -->
+                <div onclick="navigateTo('complaint')" class="bg-white p-4 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 cursor-pointer border-b-4 border-red-400">
+                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3 text-red-500">
+                        <img src="Gambar/Pemberitahuan.jpg" alt="Logo kemenag" width="80px">
+                    </div>
+                    <h3 class="font-bold text-gray-800" data-i18n="menu_complaint">Pengaduan</h3>
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="desc_complaint">Lapor masalah layanan</p>
+                </div>
+
+                <!-- Card 2: Daftar Nikah -->
+                <div onclick="navigateTo('marriage')" class="bg-white p-4 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 cursor-pointer border-b-4 border-pink-400">
+                    <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center mb-3 text-pink-500">
+                        <img src="Gambar/Nikah.jpg" alt="Logo kemenag" width="80px">
+                    </div>
+                    <h3 class="font-bold text-gray-800" data-i18n="menu_marriage">Daftar Nikah</h3>
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="desc_marriage">Cek syarat & daftar</p>
+                </div>
+
+                <!-- Card 3: Konsultasi -->
+                <div onclick="navigateTo('consultation')" class="bg-white p-4 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 cursor-pointer border-b-4 border-blue-400">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3 text-blue-500">
+                        <img src="Gambar/Konsultasi 1.jpg" alt="Logo kemenag" width="80px">
+                    </div>
+                    <h3 class="font-bold text-gray-800" data-i18n="menu_consult">Konsultasi</h3>
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="desc_consult">Tanya jawab agama</p>
+                </div>
+
+                <!-- Card 4: Posko Keliling -->
+                <div onclick="navigateTo('mobilepost')" class="bg-white p-4 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 cursor-pointer border-b-4 border-yellow-400">
+                    <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mb-3 text-yellow-600">
+                        <img src="Gambar/Jadwal Keliling.jpg" alt="Logo kemenag" width="80px">
+                    </div>
+                    <h3 class="font-bold text-gray-800" data-i18n="menu_post">Posko Keliling</h3>
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="desc_post">Cek jadwal pulau</p>
+                </div>
+                
+            <!-- Instagram Follow Button -->
+            <div class="mt-6">
+                <a href="https://www.instagram.com/kua.takabonerate?igsh=bm0zZXB5anJvc29q&utm_source=qr" target="_blank" class="flex items-center justify-center w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white p-3 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95">
+                    <i class="fa-brands fa-instagram text-2xl mr-2"></i>
+                    <span class="font-bold text-sm">Follow Instagram KUA</span>
+                </a>
+                </div>
+            </div>
+
+            <!-- Admin Access Link -->
+            <div class="mt-8 text-center">
+                <button onclick="navigateTo('admin-login')" class="text-xs text-gray-400 underline">Login Admin KUA</button>
+            </div>
+        </div>
+
+        <!-- PENGADUAN VIEW -->
+        <div id="view-complaint" class="view-section">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <button onclick="navigateTo('home')" class="text-gray-500"><i class="fa-solid fa-arrow-left"></i></button>
+                <span data-i18n="menu_complaint">Pengaduan Cepat</span>
+            </h2>
+            <form id="complaintForm" onsubmit="handleComplaintSubmit(event)" class="space-y-4 bg-white p-4 rounded-xl shadow-sm">
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Kategori</label>
+                    <select id="compCategory" class="w-full p-3 rounded-lg border bg-gray-50 border-gray-200 focus:outline-none focus:border-teal-500">
+                        <option value="Layanan">Pengawasan Nikah dan Rujuk</option>
+                        <option value="Bimbingan">Bimwin & Keluarga Sakinah</option>
+                        <option value="Bimbingan">Bimbingan Kemasjidan</option>
+                        <option value="Konsultasi">Konsultasi Syariah</option>
+                        <option value="Bimbingan">Penerangan Agama Islam</option>
+                        <option value="Konsultasi">Zakat & Wakaf</option>
+                        <option value="Konsultasi">Pengelolaan Data Keagamaan</option>
+                        <option value="Konsultasi">Ketatausahaan dan Kerumahtanggaan KUA</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Lokasi (Pulau/Desa)</label>
+                    <select> id="compCategory" class="w-full p-3 rounded-lg border bg-gray-50 border-gray-200 focus:outline-none focus:border-teal-500">
+                        <option value="pulau">Pulau Kayuadi</option>
+                        <option value="pulau">Pulau Jinato</option>
+                        <option value="pulau">Pulau Rajuni</option>
+                        <option value="pulau">Pulau Latondu</option>
+                        <option value="pulau">Pulau Tarupa</option>
+                        <option value="pulau">Pulau Tambuna</option>
+                        <option value="pulau">Pulau Pasitallu</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Cerita Singkat</label>
+                    <textarea id="compDesc" rows="3" required placeholder="Jelaskan masalahnya..." class="w-full p-3 rounded-lg border bg-gray-50 border-gray-200"></textarea>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="compAnon" class="w-5 h-5 text-teal-600 rounded">
+                    <label for="compAnon" class="text-sm">Kirim sebagai Anonim (Rahasia)</label>
+                </div>
+                <div id="identityGroup">
+                    <label class="block text-sm font-semibold mb-1">Nama Pelapor</label>
+                    <input type="text" id="compName" class="w-full p-3 rounded-lg border bg-gray-50 border-gray-200">
+                </div>
+                <button type="submit" class="w-full bg-kua-primary text-white py-3 rounded-lg font-bold hover:bg-teal-700 transition shadow-lg">
+                    Kirim Laporan
+                </button>
+            </form>
+        </div>
+
+        <!-- DAFTAR NIKAH VIEW -->
+        <div id="view-marriage" class="view-section">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <button onclick="navigateTo('home')" class="text-gray-500"><i class="fa-solid fa-arrow-left"></i></button>
+                <span data-i18n="menu_marriage">Daftar Nikah</span>
+            </h2>
+            
+            <!-- Checklist -->
+            <div class="bg-teal-50 p-4 rounded-xl mb-4 border border-teal-100">
+                <h3 class="font-bold text-teal-800 text-sm mb-2"><i class="fa-solid fa-list-check"></i> Syarat Wajib:</h3>
+                <ul class="text-xs text-gray-600 space-y-1 ml-4 list-disc">
+                    <li>Surat N1, N2, N4 dari Kelurahan/Desa</li>
+                    <li>Fotocopy KTP & KK (Catin & Ortu)</li>
+                    <li>Pas Foto 2x3 (4 lembar) & 4x6 (2 lembar) latar biru</li>
+                    <li>Surat izin orang tua (jika umur < 21)</li>
+                </ul>
+            </div>
+
+            <form id="marriageForm" onsubmit="handleMarriageSubmit(event)" class="space-y-4 bg-white p-4 rounded-xl shadow-sm">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold mb-1">Nama Calon Suami</label>
+                        <input type="text" id="mGroom" required class="w-full p-2 rounded-lg border bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1">Nama Calon Istri</label>
+                        <input type="text" id="mBride" required class="w-full p-2 rounded-lg border bg-gray-50">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Rencana Tanggal Akad</label>
+                    <input type="date" id="mDate" required class="w-full p-3 rounded-lg border bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Upload KTP/KK (Foto HP)</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-500 bg-gray-50">
+                        <i class="fa-solid fa-camera text-2xl mb-1"></i>
+                        <p class="text-xs">Klik untuk ambil foto dokumen</p>
+                        <input type="file" class="hidden"> <!-- Demo purposes, visible click area implies logic -->
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-pink-600 text-white py-3 rounded-lg font-bold hover:bg-pink-700 transition shadow-lg">
+                    Daftar Antrian
+                </button>
+            </form>
+        </div>
+
+        <!-- KONSULTASI VIEW -->
+        <div id="view-consultation" class="view-section">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <button onclick="navigateTo('home')" class="text-gray-500"><i class="fa-solid fa-arrow-left"></i></button>
+                <span data-i18n="menu_consult">Konsultasi Agama</span>
+            </h2>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button type="button" class="p-3 bg-white border-2 border-teal-500 text-teal-600 rounded-xl font-bold text-sm">
+                    <i class="fa-solid fa-user-group block text-2xl mb-1"></i> Tatap Muka
+                </button>
+                <button type="button" onclick="window.open('https://wa.me/6282395228040', '_blank')" class="p-3 bg-green-500 text-white rounded-xl font-bold text-sm shadow-md">
+                    <i class="fa-brands fa-whatsapp block text-2xl mb-1"></i> Chat WA
+                </button>
+            </div>
+
+            <form id="consultForm" onsubmit="handleConsultSubmit(event)" class="bg-white p-4 rounded-xl shadow-sm space-y-4">
+                <p class="text-sm font-semibold text-gray-700">Booking Jadwal Tatap Muka</p>
+                <select id="cTopic" class="w-full p-3 rounded-lg border bg-gray-50">
+                    <option>Hukum Keluarga / Munakahat</option>
+                    <option>Waris</option>
+                    <option>Zakat & Wakaf</option>
+                    <option>Lainnya</option>
+                </select>
+                <input type="date" id="cDate" required class="w-full p-3 rounded-lg border bg-gray-50">
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">Booking Jadwal</button>
+            </form>
+        </div>
+
+        <!-- POSKO KELILING VIEW -->
+        <div id="view-mobilepost" class="view-section">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <button onclick="navigateTo('home')" class="text-gray-500"><i class="fa-solid fa-arrow-left"></i></button>
+                <span data-i18n="menu_post">Posko Keliling</span>
+            </h2>
+
+            <!-- Emergency Alert -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4 rounded-r shadow-sm">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-yellow-700">
+                            <span class="font-bold">Info Cuaca:</span> Penyeberangan menyesuaikan dengan cuaca.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule List -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="bg-teal-600 text-white p-3 font-bold text-sm">Jadwal Kunjungan</div>
+                <div class="divide-y divide-gray-100">
+                    <div class="p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-gray-800">Pulau Kayuadi</div>
+                            <div class="text-xs text-gray-500">Waktu Menyesuaikan</div>
+                        </div>
+                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">dijadwalkan</span>
+                    </div>
+                    <div class="p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-gray-800">Pulau Jinato</div>
+                            <div class="text-xs text-gray-500">Waktu Menyesuaikan</div>
+                        </div>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">dijadwalkan</span>
+                    </div>
+                    <div class="p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-gray-800">Pulau Rajuni</div>
+                            <div class="text-xs text-gray-500">Waktu Menyesuaikan</div>
+                        </div>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">dijadwalkan</span>
+                    </div>
+                    <div class="p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-gray-800">Pulau Latondu</div>
+                            <div class="text-xs text-gray-500">Waktu Menyesuaikan</div>
+                        </div>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">dijadwalkan</span>
+                    </div>
+                    <div class="p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-gray-800">Pulau Tarupa</div>
+                            <div class="text-xs text-gray-500">Waktu Menyesuaikan</div>
+                        </div>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">dijadwalkan</span>
+                    </div>
+                    <div class="p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-gray-800">Pulau Tambuna</div>
+                            <div class="text-xs text-gray-500">Waktu Menyesuaikan</div>
+                        </div>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">dijadwalkan</span>
+                    </div>
+                    <div class="p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-gray-800">Pulau Pasitallu</div>
+                            <div class="text-xs text-gray-500">Waktu Menyesuaikan</div>
+                        </div>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">dijadwalkan</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-4 bg-blue-50 rounded-xl text-center">
+                <i class="fa-solid fa-map-location-dot text-4xl text-blue-300 mb-2"></i>
+                <p class="text-xs text-gray-500">Peta lokasi posko tersedia offline di cache aplikasi.</p>
+            </div>
+        </div>
+
+        <!-- STATUS / MY TICKETS VIEW -->
+        <div id="view-status" class="view-section">
+            <h2 class="text-xl font-bold mb-4">Status Layanan Saya</h2>
+            <div id="statusList" class="space-y-3">
+                <!-- Content injected via JS -->
+                <div class="text-center py-10 text-gray-400">
+                    <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
+                    <p>Belum ada riwayat layanan.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN LOGIN -->
+        <div id="view-admin-login" class="view-section">
+            <div class="max-w-xs mx-auto mt-10">
+                <div class="text-center mb-6">
+                    <i class="fa-solid fa-user-shield text-4xl text-teal-600"></i>
+                    <h2 class="text-xl font-bold mt-2">Login Petugas KUA</h2>
+                </div>
+                <form onsubmit="handleAdminLogin(event)" class="bg-white p-6 rounded-xl shadow-lg space-y-4">
+                    <input type="text" id="adminUser" placeholder="Username" class="w-full p-3 border rounded">
+                    <input type="password" id="adminPass" placeholder="Password" class="w-full p-3 border rounded">
+                    <button type="submit" class="w-full bg-gray-800 text-white py-3 rounded font-bold">Masuk</button>
+                    <p class="text-xs text-center text-gray-400">(Demo: admin / 1234)</p>
+                </form>
+                <div class="text-center mt-4">
+                    <button onclick="navigateTo('home')" class="text-teal-600 text-sm font-bold">Kembali ke Beranda</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN DASHBOARD -->
+        <div id="view-admin-dashboard" class="view-section">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Dashboard KUA</h2>
+                <button onclick="adminLogout()" class="text-xs text-red-500 font-bold border border-red-200 px-2 py-1 rounded">Logout</button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-2 mb-6">
+                <div class="bg-white p-3 rounded-lg shadow-sm text-center">
+                    <div class="text-2xl font-bold text-teal-600" id="stat-complaint">0</div>
+                    <div class="text-[10px] text-gray-500">Aduan</div>
+                </div>
+                <div class="bg-white p-3 rounded-lg shadow-sm text-center">
+                    <div class="text-2xl font-bold text-pink-600" id="stat-marriage">0</div>
+                    <div class="text-[10px] text-gray-500">Nikah</div>
+                </div>
+                <div class="bg-white p-3 rounded-lg shadow-sm text-center">
+                    <div class="text-2xl font-bold text-blue-600" id="stat-consult">0</div>
+                    <div class="text-[10px] text-gray-500">Konsul</div>
+                </div>
+            </div>
+
+            <!-- Tab Nav for Admin -->
+            <div class="flex border-b border-gray-200 mb-4 text-sm overflow-x-auto">
+                <button onclick="renderAdminTable('complaints')" class="px-4 py-2 text-teal-600 border-b-2 border-teal-600 font-bold">Aduan</button>
+                <button onclick="renderAdminTable('marriages')" class="px-4 py-2 text-gray-500 hover:text-teal-600">Nikah</button>
+                <button onclick="renderAdminTable('consultations')" class="px-4 py-2 text-gray-500 hover:text-teal-600">Konsul</button>
+            </div>
+
+            <!-- List Container -->
+            <div id="adminDataList" class="space-y-3">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-3 z-40 max-w-md mx-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <button onclick="navigateTo('home')" class="flex flex-col items-center text-teal-600 w-1/4 group">
+            <i class="fa-solid fa-house text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Beranda</span>
+        </button>
+        <button onclick="navigateTo('status')" class="flex flex-col items-center text-gray-400 hover:text-teal-600 w-1/4 group">
+            <i class="fa-solid fa-clipboard-list text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Status</span>
+        </button>
+        <button onclick="navigateTo('mobilepost')" class="flex flex-col items-center text-gray-400 hover:text-teal-600 w-1/4 group">
+            <i class="fa-regular fa-calendar-days text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Jadwal</span>
+        </button>
+        <button onclick="alert('Alamat: JL. Poros Kayuadi/Hubungi Call Center: 0853-9407-7931 ADMIN KUA')" class="flex flex-col items-center text-gray-400 hover:text-teal-600 w-1/4 group">
+            <i class="fa-solid fa-circle-question text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Bantuan</span>
+        </button>
+    </nav>
+
+    <!-- MODAL / TOAST -->
+    <div id="toast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 text-white px-6 py-4 rounded-xl shadow-2xl z-50 hidden text-center w-64">
+        <div class="mb-2 text-2xl" id="toastIcon"><i class="fa-solid fa-check-circle text-green-400"></i></div>
+        <p id="toastMessage" class="text-sm">Berhasil!</p>
+    </div>
+
+    <script>
+        // --- 1. STATE & DATABASE SIMULATION ---
+        const db = {
+            complaints: JSON.parse(localStorage.getItem('kua_complaints')) || [],
+            marriages: JSON.parse(localStorage.getItem('kua_marriages')) || [],
+            consultations: JSON.parse(localStorage.getItem('kua_consultations')) || []
+        };
+
+        // --- 2. LOCALIZATION DATA ---
+        const translations = {
+            id: {
+                welcome: "Selamat Datang",
+                subtitle: "Urusan agama jadi lebih mudah.",
+                menu_complaint: "Pengaduan",
+                desc_complaint: "Lapor masalah layanan",
+                menu_marriage: "Daftar Nikah",
+                desc_marriage: "Cek syarat & daftar",
+                menu_consult: "Konsultasi",
+                desc_consult: "Tanya jawab agama",
+                menu_post: "Posko Keliling",
+                desc_post: "Cek jadwal pulau"
+            },
+            lkl: { // Simulasi Bahasa Selayar/Makassar sederhana
+                welcome: "Salamaki Tapada Salama",
+                subtitle: "Urusang agama lebih gampangmi.",
+                menu_complaint: "Laporang",
+                desc_complaint: "Lapor masalah pelayanan",
+                menu_marriage: "Daftara Bunting",
+                desc_marriage: "Ceki syaratna & daftar",
+                menu_consult: "Akkuta'na",
+                desc_consult: "Tanya jawab agama",
+                menu_post: "Posko Pulau",
+                desc_post: "Jadwalna posko"
+            }
+        };
+
+        // --- 3. CORE FUNCTIONS ---
+
+        function saveData() {
+            localStorage.setItem('kua_complaints', JSON.stringify(db.complaints));
+            localStorage.setItem('kua_marriages', JSON.stringify(db.marriages));
+            localStorage.setItem('kua_consultations', JSON.stringify(db.consultations));
+        }
+
+        function navigateTo(viewId) {
+            // Hide all views
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            // Show target view
+            const target = document.getElementById('view-' + viewId);
+            if(target) target.classList.add('active');
+            
+            // Special initialization for status view
+            if(viewId === 'status') renderUserStatus();
+            
+            // Scroll to top
+            window.scrollTo(0,0);
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            
+            msg.textContent = message;
+            icon.innerHTML = type === 'success' 
+                ? '<i class="fa-solid fa-check-circle text-green-400"></i>' 
+                : '<i class="fa-solid fa-circle-exclamation text-red-400"></i>';
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2500);
+        }
+
+        // --- 4. FORM HANDLERS ---
+
+        function handleComplaintSubmit(e) {
+            e.preventDefault();
+            const isAnon = document.getElementById('compAnon').checked;
+            
+            const newTicket = {
+                id: 'TKT-' + Date.now().toString().slice(-4),
+                type: 'Pengaduan',
+                category: document.getElementById('compCategory').value,
+                location: document.getElementById('compLocation').value,
+                desc: document.getElementById('compDesc').value,
+                sender: isAnon ? 'Anonim' : document.getElementById('compName').value,
+                status: 'Diterima',
+                date: new Date().toLocaleDateString('id-ID')
+            };
+
+            db.complaints.push(newTicket);
+            saveData();
+            showToast('Laporan berhasil dikirim!');
+            e.target.reset();
+            setTimeout(() => navigateTo('status'), 1000);
+        }
+
+        function handleMarriageSubmit(e) {
+            e.preventDefault();
+            const newReg = {
+                id: 'REG-' + Date.now().toString().slice(-4),
+                type: 'Nikah',
+                groom: document.getElementById('mGroom').value,
+                bride: document.getElementById('mBride').value,
+                date: document.getElementById('mDate').value,
+                status: 'Verifikasi Berkas',
+                reqDate: new Date().toLocaleDateString('id-ID')
+            };
+
+            db.marriages.push(newReg);
+            saveData();
+            showToast('Pendaftaran nikah tersimpan!');
+            e.target.reset();
+            setTimeout(() => navigateTo('status'), 1000);
+        }
+
+        function handleConsultSubmit(e) {
+            e.preventDefault();
+            const newBooking = {
+                id: 'BOK-' + Date.now().toString().slice(-4),
+                type: 'Konsultasi',
+                topic: document.getElementById('cTopic').value,
+                date: document.getElementById('cDate').value,
+                status: 'Menunggu Konfirmasi',
+                reqDate: new Date().toLocaleDateString('id-ID')
+            };
+
+            db.consultations.push(newBooking);
+            saveData();
+            showToast('Jadwal konsultasi diajukan!');
+            e.target.reset();
+            setTimeout(() => navigateTo('status'), 1000);
+        }
+
+        // --- 5. USER STATUS RENDERER ---
+        function renderUserStatus() {
+            const container = document.getElementById('statusList');
+            const allItems = [...db.complaints, ...db.marriages, ...db.consultations]
+                .sort((a,b) => b.id.localeCompare(a.id)); // Newest first
+
+            if (allItems.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-gray-400">
+                        <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
+                        <p>Belum ada riwayat layanan.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = allItems.map(item => {
+                let colorClass = 'bg-gray-100 text-gray-600';
+                if(item.status === 'Selesai' || item.status === 'Disetujui') colorClass = 'bg-green-100 text-green-700';
+                if(item.status === 'Diterima' || item.status === 'Verifikasi Berkas') colorClass = 'bg-blue-100 text-blue-700';
+
+                let details = '';
+                if(item.type === 'Nikah') details = `${item.groom} & ${item.bride}`;
+                if(item.type === 'Pengaduan') details = `${item.category} di ${item.location}`;
+                if(item.type === 'Konsultasi') details = `${item.topic}`;
+
+                return `
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-teal-500">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-bold text-sm text-gray-800">${item.type} <span class="text-xs font-normal text-gray-400">#${item.id}</span></span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${colorClass}">${item.status}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-1">${details}</p>
+                    <p class="text-xs text-gray-400">${item.date || item.reqDate}</p>
+                </div>`;
+            }).join('');
+        }
+
+        // --- 6. ADMIN SYSTEM ---
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('adminUser').value;
+            const p = document.getElementById('adminPass').value;
+            
+            if(u === 'admin' && p === '1234') {
+                updateAdminStats();
+                navigateTo('admin-dashboard');
+                renderAdminTable('complaints'); // Default view
+            } else {
+                showToast('Login gagal!', 'error');
+            }
+        }
+
+        function adminLogout() {
+            navigateTo('home');
+        }
+
+        function updateAdminStats() {
+            document.getElementById('stat-complaint').innerText = db.complaints.length;
+            document.getElementById('stat-marriage').innerText = db.marriages.length;
+            document.getElementById('stat-consult').innerText = db.consultations.length;
+        }
+
+        function renderAdminTable(type) {
+            const container = document.getElementById('adminDataList');
+            let data = [];
+            
+            if(type === 'complaints') data = db.complaints;
+            if(type === 'marriages') data = db.marriages;
+            if(type === 'consultations') data = db.consultations;
+
+            if(data.length === 0) {
+                container.innerHTML = '<p class="text-center text-sm text-gray-400 py-4">Data kosong.</p>';
+                return;
+            }
+
+            container.innerHTML = data.map((item, index) => {
+                return `
+                <div class="bg-white p-3 rounded border border-gray-200 text-sm">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-bold">#${item.id}</span>
+                        <select onchange="updateStatus('${type}', ${index}, this.value)" class="text-xs border rounded bg-gray-50">
+                            <option value="${item.status}">${item.status}</option>
+                            <option value="Diterima">Diterima</option>
+                            <option value="Diproses">Diproses</option>
+                            <option value="Selesai">Selesai</option>
+                            <option value="Ditolak">Ditolak</option>
+                        </select>
+                    </div>
+                    <p class="text-gray-600 text-xs mb-1">${item.desc || item.groom + ' & ' + item.bride || item.topic}</p>
+                    <div class="text-[10px] text-gray-400 flex justify-between">
+                        <span>${item.sender || 'User'}</span>
+                        <span>${item.date || item.reqDate}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function updateStatus(type, index, newStatus) {
+            if(type === 'complaints') db.complaints[index].status = newStatus;
+            if(type === 'marriages') db.marriages[index].status = newStatus;
+            if(type === 'consultations') db.consultations[index].status = newStatus;
+            
+            saveData();
+            showToast('Status diperbarui');
+            updateAdminStats();
+        }
+
+        // --- 7. UTILS & LANGUAGE ---
+        function changeLanguage(lang) {
+            const data = translations[lang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(data[key]) el.innerText = data[key];
+            });
+        }
+
+        function playCurrentPageAudio() {
+            // Simple Text-to-Speech Implementation
+            if ('speechSynthesis' in window) {
+                // Determine active view to read specific content
+                const activeView = document.querySelector('.view-section.active');
+                let textToRead = activeView.innerText;
+                
+                // Limit text length for UX
+                textToRead = textToRead.substring(0, 200); 
+
+                const utterance = new SpeechSynthesisUtterance(textToRead);
+                utterance.lang = 'id-ID';
+                utterance.rate = 0.9;
+                window.speechSynthesis.cancel(); // Stop previous
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("Browser Anda tidak mendukung fitur audio ini.");
+            }
+        }
+
+        // --- 8. OFFLINE DETECTION ---
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        function updateOnlineStatus() {
+            const banner = document.getElementById('offline-banner');
+            if (!navigator.onLine) {
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+                // Logic to sync localStorage to real server would go here
+            }
+        }
+
+        // Logic toggle anonim
+        document.getElementById('compAnon').addEventListener('change', function() {
+            const group = document.getElementById('identityGroup');
+            if(this.checked) group.classList.add('hidden');
+            else group.classList.remove('hidden');
+        });
+
+        // Initialize
+        updateOnlineStatus();
+
+    </script>
+</body>
+</html>
